@@ -2,7 +2,7 @@
 #include <TlHelp32.h>
 #include <iostream>
 
-#Author memN0ps
+//Author memN0ps
 
 class MemoryManager {
 private:
