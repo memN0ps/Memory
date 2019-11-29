@@ -13,6 +13,6 @@ Example below:
 
 MemoryManager memory;
 
-uintptr_t targetProcess = memory.getProcess("example.exe");
-uintptr_t targetModule = memory.getProcess(targetProcess, "example.dll");
+uintptr_t targetProcess = memory.getProcessID("example.exe");
+uintptr_t targetModule = memory.getModuleID(targetProcess, "example.dll");
 ```
