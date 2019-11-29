@@ -2,3 +2,17 @@
 Memory hacking etc....
 
 Made some of these a long time ago just for fun.
+
+#### How to use?
+Example below:
+
+```
+#include "MemoryManger.h"
+
+//Create a handle to the target process
+
+MemoryManager memory;
+
+uintptr_t targetProcess = memory.getProcess("example.exe");
+uintptr_t targetModule = memory.getProcess(targetProcess, "example.dll");
+```
