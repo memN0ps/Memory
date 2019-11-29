@@ -7,7 +7,7 @@ Made some of these a long time ago just for fun.
 Example below:
 
 ```
-#include "MemoryManger.h"
+#include "MemoryManager.h"
 
 //Create a handle to the target process
 
