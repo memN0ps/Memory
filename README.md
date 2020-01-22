@@ -1,18 +1,24 @@
 # Memory
-Memory hacking etc....
 
-Made some of these a long time ago just for fun.
+Memory hacking for fun and practice
 
-#### How to use?
-Example below:
+#### Usage
 
 ```
-#include "MemoryManager.h"
+//Include the MemoryManger.cpp file
+#include "MemoryManager.cpp"
 
-//Create a handle to the target process
+//Create a object
+MemoryManager Memory;
 
-MemoryManager memory;
+//Get the process ID of the target process and create a handle to the target process
+uintptr_t targetProcess = Memory.GetProcessID("example.exe");
 
-uintptr_t targetProcess = memory.getProcessID("example.exe");
-uintptr_t targetModule = memory.getModuleID(targetProcess, "example.dll");
+//Get the module ID of the module from the target process
+uintptr_t targetModule = Memory.GetModuleID(targetProcess, "example.dll");
 ```
+
+### References
+
+* https://guidedhacking.com/
+* https://docs.microsoft.com/
