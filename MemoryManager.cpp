@@ -51,46 +51,54 @@ public:
 		//dwSize: The size of the structure, in bytes. Before calling the Process32First function, set this member to sizeof(PROCESSENTRY32). If you do not initialize dwSize, Process32First fails.
 		PROCESSENTRY32 processEntry;
 		processEntry.dwSize = sizeof(processEntry);
+
+		//Process32First: Retrieves information about the first process encountered in a system snapshot.
+		//hSnapshot: A handle to the snapshot returned from a previous call to the CreateToolhelp32Snapshot function.
+		//processEntry: A pointer to a PROCESSENTRY32 structure. It contains process information such as the name of the executable file, the process identifier, and the process identifier of the parent process.
+		if (Process32First(hSnapshot, &processEntry)) {
 		
-		//Loop through all the processes recorded in a system snapshot until the matched process is found.
-		do {
-			/**The strcmp function performs an ordinal comparison of string1 and string2 and returns a value that indicates their relationship. 
-			*wcscmp and _mbscmp are, respectively, wide-character and multibyte-character versions of strcmp. 
-			*_mbscmp recognizes multibyte-character sequences according to the current multibyte code page and returns _NLSCMPERROR on an error.
-			**
-			*The wchar_t, a.k.a. wide characters, provides more room for encodings.
-			*Use char data type when the range of encodings is 256 or less, such as ASCII. Use wchar_t when you need the capacity for more than 256.
-			**/
-			//Return value is 0 if string1 is identical to string2
-			////szExeFile: The name of the executable file for the process.
-			if (!wcscmp(processEntry.szExeFile, targetProcess)) {
-				//Found Process ID
-				//th32ProcessID: The process identifier.
-				processID = processEntry.th32ProcessID;
-				std::wcout << "Found Process " << processEntry.szExeFile << " with process ID " << processID << std::endl;
+			//Loop through all the processes recorded in a system snapshot until the matched process is found.
+			do {
+				/**The strcmp function performs an ordinal comparison of string1 and string2 and returns a value that indicates their relationship. 
+				*wcscmp and _mbscmp are, respectively, wide-character and multibyte-character versions of strcmp. 
+				*_mbscmp recognizes multibyte-character sequences according to the current multibyte code page and returns _NLSCMPERROR on an error.
+				**
+				*The wchar_t, a.k.a. wide characters, provides more room for encodings.
+				*Use char data type when the range of encodings is 256 or less, such as ASCII. Use wchar_t when you need the capacity for more than 256.
+				**/
+				//Return value is 0 if string1 is identical to string2
+				////szExeFile: The name of the executable file for the process.
+				if (!wcscmp(processEntry.szExeFile, targetProcess)) {
+					//Found Process ID
+					//th32ProcessID: The process identifier.
+					processID = processEntry.th32ProcessID;
+					std::wcout << "Found Process " << processEntry.szExeFile << " with process ID " << processID << std::endl;
 
-				//OpenProcess: Opens an existing local process object.
-				//bInheritHandle: false: If this value is TRUE, processes created by this process will inherit the handle. Otherwise, the processes do not inherit this handle.
-				//processID: The identifier of the local process to be opened.
-				this->hProcess = OpenProcess(PROCESS_ALL_ACCESS, false, processID);
+					//OpenProcess: Opens an existing local process object.
+					//bInheritHandle: false: If this value is TRUE, processes created by this process will inherit the handle. Otherwise, the processes do not inherit this handle.
+					//processID: The identifier of the local process to be opened.
+					this->hProcess = OpenProcess(PROCESS_ALL_ACCESS, false, processID);
 
-				if (hProcess == INVALID_HANDLE_VALUE) {
-					std::wcout << "Failed to get a handle to the process " << processEntry.szExeFile << " with process ID " << processID << std::endl;
-					return 0;
+					if (hProcess == INVALID_HANDLE_VALUE) {
+						std::wcout << "Failed to get a handle to the process " << processEntry.szExeFile << " with process ID " << processID << std::endl;
+						CloseHandle(hSnapshot);
+						return false;
+					}
+
+					//Closes an open object handle.
+					CloseHandle(hSnapshot);
+
+					return processID;
 				}
 
-				//Closes an open object handle.
-				CloseHandle(hSnapshot);
+				//Process32Next: Retrieves information about the next process recorded in a system snapshot.
+				//hSnapshot: A handle to the snapshot returned from a previous call to the CreateToolhelp32Snapshot function.
+				//A pointer to a PROCESSENTRY32 structure.
+			} while (Process32Next(hSnapshot, &processEntry));
+		}
 
-				return processID;
-			}
-
-			//Process32Next: Retrieves information about the next process recorded in a system snapshot.
-			//hSnapshot: A handle to the snapshot returned from a previous call to the CreateToolhelp32Snapshot function.
-			//A pointer to a PROCESSENTRY32 structure.
-		} while (Process32Next(hSnapshot, &processEntry));
-
-		return 0;
+		CloseHandle(hSnapshot);
+		return false;
 	}
 
 	//Get module base address of the given target module
@@ -120,6 +128,7 @@ public:
 
 		if (hSnapshot == INVALID_HANDLE_VALUE) {
 			std::cout << "Failed to take a snapshot for GetModuleID!" << std::endl;
+			CloseHandle(hSnapshot);
 			return false;
 		}
 
@@ -128,37 +137,43 @@ public:
 		MODULEENTRY32 moduleEntry;
 		moduleEntry.dwSize = sizeof(moduleEntry);
 
-		//Loop through all the processes recorded in a system snapshot until the matched process is found.
+		
+		//Module32First: Retrieves information about the first module associated with a process.
+		//hSnapshot: A handle to the snapshot returned from a previous call to the CreateToolhelp32Snapshot function.
+		//moduleEntry: A pointer to a MODULEENTRY32 structure.
+		if (Module32First(hSnapshot, &moduleEntry)) {
+			//Loop through all the processes recorded in a system snapshot until the matched process is found.
+			do {
+				/**The strcmp function performs an ordinal comparison of string1 and string2 and returns a value that indicates their relationship.
+				*wcscmp and _mbscmp are, respectively, wide-character and multibyte-character versions of strcmp.
+				*_mbscmp recognizes multibyte-character sequences according to the current multibyte code page and returns _NLSCMPERROR on an error.
+				**
+				*The wchar_t, a.k.a. wide characters, provides more room for encodings.
+				*Use char data type when the range of encodings is 256 or less, such as ASCII. Use wchar_t when you need the capacity for more than 256.
+				**/
+				//Return value is 0 if string1 is identical to string2
+				//szExeFile: The name of the executable file for the process.
+				if (!wcscmp(moduleEntry.szModule, targetModule)) {
+					//Found Module ID
+					//th32ProcessID: The process identifier.
+					//modBaseAddr: The base address of the module in the context of the owning process.
+					moduleID = (uintptr_t)moduleEntry.modBaseAddr;
+					std::wcout << "Found Process " << moduleEntry.szModule << " with module ID " << moduleID << std::endl;
 
-		do {
-			/**The strcmp function performs an ordinal comparison of string1 and string2 and returns a value that indicates their relationship.
-			*wcscmp and _mbscmp are, respectively, wide-character and multibyte-character versions of strcmp.
-			*_mbscmp recognizes multibyte-character sequences according to the current multibyte code page and returns _NLSCMPERROR on an error.
-			**
-			*The wchar_t, a.k.a. wide characters, provides more room for encodings.
-			*Use char data type when the range of encodings is 256 or less, such as ASCII. Use wchar_t when you need the capacity for more than 256.
-			**/
-			//Return value is 0 if string1 is identical to string2
-			//szExeFile: The name of the executable file for the process.
-			if (!wcscmp(moduleEntry.szModule, targetModule)) {
-				//Found Module ID
-				//th32ProcessID: The process identifier.
-				//modBaseAddr: The base address of the module in the context of the owning process.
-				moduleID = (uintptr_t)moduleEntry.modBaseAddr;
-				std::wcout << "Found Process " << moduleEntry.szModule << " with module ID " << moduleID << std::endl;
+					//Closes an open object handle.
+					CloseHandle(hSnapshot);
 
-				//Closes an open object handle.
-				CloseHandle(hSnapshot);
+					return moduleID;
+				}
 
-				return moduleID;
-			}
+				//Module32Next: Retrieves information about the first module associated with a process.
+				//A handle to the snapshot returned from a previous call to the CreateToolhelp32Snapshot function.
+				//moduleEntry: A pointer to a MODULEENTRY32 structure.
+			} while (Module32Next(hSnapshot, &moduleEntry));
+		}
 
-			//Module32Next: Retrieves information about the first module associated with a process.
-			//A handle to the snapshot returned from a previous call to the CreateToolhelp32Snapshot function.
-			//moduleEntry: A pointer to a MODULEENTRY32 structure.
-		} while (Module32Next(hSnapshot, &moduleEntry));
-
-		return 0;
+		CloseHandle(hSnapshot);
+		return false;
 	}
 
 	//ReadProcess Memory Template
