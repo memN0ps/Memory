@@ -37,7 +37,7 @@ while (true) {
     
     //Write 1337 to the players health when space bar is pressed
     
-    if (GetAsyncKeyState(VK_SPACE)) {
+    if (GetAsyncKeyState(VK_SPACE) & 1) {
         WriteMemory<int>(localPlayer + m_iHealth, newHealth);
         std::cout << "Get Rekt!" << std::endl;
     }
