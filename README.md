@@ -7,6 +7,7 @@ Memory hacking for fun and practice, please note this is just an example soley f
 ```
 //Include the MemoryManger.cpp file
 #include "MemoryManager.cpp"
+#include <iostream>
 
 //Create a object
 MemoryManager Memory;
